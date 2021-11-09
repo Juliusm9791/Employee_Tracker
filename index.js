@@ -1,4 +1,5 @@
 const mysql = require('mysql2');
+const inquirer = require("inquirer");
 
 // Connect to database
 const db = mysql.createConnection(
@@ -14,6 +15,14 @@ const db = mysql.createConnection(
 );
 
 // Query database
-db.query('SELECT * FROM students', function (err, results) {
+db.query('SELECT * FROM department', function (err, results) {
+  console.log(results);
+});
+
+db.query('SELECT * FROM employee_role', function (err, results) {
+  console.log(results);
+});
+
+db.query('SELECT * FROM employee', function (err, results) {
   console.log(results);
 });
