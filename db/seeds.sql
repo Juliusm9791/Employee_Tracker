@@ -1,14 +1,14 @@
 INSERT INTO department (department_name)
 VALUES ("HR"),
-       ("HR"),
-       ("HR"),
-       ("HR");
+       ("Sales"),
+       ("Service"),
+       ("Accounting");
        
 INSERT INTO employee_role (title, salary)
-VALUES ("Engineer", 50),
-       ("Engineer", 50),
-       ("Engineer", 50),
-       ("Engineer", 50);
+VALUES ("Engineer", 100000),
+       ("Engineer", 100000),
+       ("Engineer", 100000),
+       ("Engineer", 100000);
 
 INSERT INTO employee (first_name, last_name)
 VALUES ("Tom", "Tom"),
