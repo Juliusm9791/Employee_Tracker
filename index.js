@@ -12,15 +12,13 @@ async function main(table, key) {
     },
   );
   switch (key) {
-    case "show":
+    case "get":
       const [rows] = await db.execute(table);
-      console.table(rows)
-      break;
+      return rows;
 
     case "insert":
       await db.query(table);
       break;
-
   }
 }
 
@@ -36,20 +34,17 @@ async function startApp() {
 
         break;
       case "View All Roles":
-        await main('SELECT * FROM employee_role', "show")
+        const roles = await main('SELECT * FROM employee_role', "get");
+        console.table(roles);
         break;
-        
+
       case "Add Role":
-        let { roleName } = await inquirer.prompt(questions[2]);
-        let { salary } = await inquirer.prompt(questions[3]);
-        let { departmentFromList } = await inquirer.prompt(questions[4]);
-        let test = `INSERT INTO employee_role (title, salary) VALUES ("${roleName}","${salary}");`;
-        console.log(test)
-        await main(test, "insert")
+        await addRole();
         break;
 
       case "View All Departaments":
-        await main('SELECT * FROM department', "show")
+        const department = await main('SELECT * FROM department', "get");
+        console.table(department);
         break;
 
       case "Add Departament":
@@ -62,6 +57,32 @@ async function startApp() {
         process.exit();
     }
   }
+}
+
+async function addRole() {
+  let { roleName } = await inquirer.prompt(questions[2]);
+  let { salary } = await inquirer.prompt(questions[3]);
+  const departmentList = await main('SELECT * FROM department', "get");
+  let departamentArray = [];
+  departmentList.forEach(element => { departamentArray.push(element.department_name) });
+
+  let { departmentFromList } = await inquirer.prompt(
+    {
+      type: 'list',
+      message: "Which departament does the role belongs to?.",
+      name: 'departmentFromList',
+      choices: departamentArray,
+    },
+  );
+
+  let departmentId = null;
+  departmentList.forEach(element => {
+    if (element.department_name === departmentFromList) {
+      departmentId = element.id;
+    }
+  });
+
+  await main(`INSERT INTO employee_role (title, salary, department) VALUES ("${roleName}", "${salary}", "${departmentId}");`, "insert")
 }
 
 startApp();

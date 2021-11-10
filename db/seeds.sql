@@ -6,9 +6,9 @@ VALUES ("HR"),
        
 INSERT INTO employee_role (title, salary)
 VALUES ("Engineer", 100000),
-       ("Engineer", 100000),
-       ("Engineer", 100000),
-       ("Engineer", 100000);
+       ("Manager", 150000),
+       ("Driver", 70000),
+       ("Accountant", 100000);
 
 INSERT INTO employee (first_name, last_name)
 VALUES ("Tom", "Tom"),
