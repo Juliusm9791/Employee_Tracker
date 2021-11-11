@@ -23,7 +23,7 @@ async function startApp() {
         await addEmployee();
         break;
       case "Update Employee Role":
-
+        await updateRole();
         break;
       case "View All Roles":
         const roles = await mainData(`SELECT employee_role.id AS id, title, department.department_name AS department, salary 
@@ -76,6 +76,45 @@ async function addEmployee() {
   await employee.getManagerId();
   await mainData(`INSERT INTO employee (first_name, last_name, employee_role) VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}");`, "insert")
   console.log("\x1b[33m", "Employee added!", "\x1b[33m")
+}
+
+async function updateRole() {
+  const selectEmployee = await mainData(`SELECT id, first_name, last_name 
+                                           FROM employee 
+                                           ORDER BY first_name ASC`, "get");
+  console.table(selectEmployee)
+
+  let employeeArray = [];
+  selectEmployee.forEach(element => { employeeArray.push(element.first_name + " " + element.last_name) });
+
+  let { updatedRole } = await inquirer.prompt({
+    type: 'list',
+    message: `Which employee's role do you want to update?`,
+    name: 'updatedRole',
+    choices: employeeArray,
+  });
+
+  const selectRole = await mainData(`SELECT employee_role.id AS id, title
+                                     FROM employee 
+                                     JOIN employee_role ON employee.employee_role = employee_role.id
+                                     GROUP BY title
+                                     ORDER BY title ASC`, "get");
+
+  console.table(selectRole)
+  let roleArray = [];
+  selectRole.forEach(element => { roleArray.push(element.title) });
+
+  let { assignUpdatedRole } = await inquirer.prompt({
+    type: 'list',
+    message: `Which role do you want to assign for the selested employee?`,
+    name: 'assignUpdatedRole',
+    choices: roleArray,
+  });
+
+
+  // await mainData(`INSERT INTO department (department_name) VALUES ("${departamentName}");`, "insert");
+  // console.log("\x1b[33m", "Department added!", "\x1b[33m")
+
 }
 
 startApp();
