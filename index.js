@@ -74,7 +74,7 @@ async function addEmployee() {
   await employee.getEmployeeLastName();
   await employee.getRoleId();
   await employee.getManagerId();
-  await mainData(`INSERT INTO employee (first_name, last_name, employee_role, manager_id) VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}" , "${employee.managerId}");`, "insert")
+  await mainData(`INSERT INTO employee (first_name, last_name, employee_role) VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}");`, "insert")
   console.log("\x1b[33m", "Employee added!", "\x1b[33m")
 }
 

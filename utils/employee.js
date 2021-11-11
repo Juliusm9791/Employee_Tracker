@@ -57,9 +57,9 @@ class Employee {
 
     async getManagerId() {
         const managersList = await mainData(`SELECT first_name, last_name, title, employee.id AS employeeId FROM employee JOIN employee_role ON employee.employee_role = employee_role.id WHERE title ='Manager'`, "get");
-        let managersListArray = [];
+        let managersListArray = ["None"];
         managersList.forEach(element => {
-            managersListArray.push((element.first_name + " " + element.last_name + " Employee ID:" + element.employeeId));
+            managersListArray.push((element.first_name + " " + element.last_name));
         });
 
         let { assignManager } = await inquirer.prompt(
@@ -72,8 +72,10 @@ class Employee {
         );
 
         managersList.forEach(element => {
-            if ((element.first_name + " " + element.last_name + " Employee ID:" + element.employeeId) === assignManager) {
+            if ((element.first_name + " " + element.last_name) === assignManager) {
                 this.managerId = element.employeeId;
+            } else {
+                this.managerId = "DBnull";
             }
         });
     }
