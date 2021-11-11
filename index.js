@@ -1,27 +1,10 @@
-const mysql = require('mysql2/promise');
+// const mysql = require('mysql2/promise');
 const inquirer = require("inquirer");
 const questions = require("./utils/questions");
 const cTable = require('console.table');
-
-async function mainData(table, key) {
-  const db = await mysql.createConnection(
-    {
-      host: 'localhost',
-      user: 'root',
-      password: 'Julius123!',
-      database: 'company_db'
-    },
-  );
-  switch (key) {
-    case "get":
-      const [rows] = await db.execute(table);
-      return rows;
-
-    case "insert":
-      await db.query(table);
-      break;
-  }
-}
+const mainData = require("./utils/datalink");
+const Employee = require("./utils/employee");
+const Role = require("./utils/role");
 
 async function startApp() {
   let answer = "";
@@ -56,86 +39,28 @@ async function startApp() {
 
       case "Quit":
         answer = "Quit";
-        console.log("\x1b[33m", "Good bye!", "\x1b[33m",)
+        console.log("\x1b[33m", "Good bye!", "\x1b[33m")
         process.exit();
     }
   }
 }
 
 async function addRole() {
-  let { roleName } = await inquirer.prompt(questions[2]);
-  let { salary } = await inquirer.prompt(questions[3]);
-  const departmentList = await mainData('SELECT * FROM department GROUP BY department_name', "get");
-  let departamentArray = [];
-  departmentList.forEach(element => { departamentArray.push(element.department_name) });
-
-  let { departmentFromList } = await inquirer.prompt(
-    {
-      type: 'list',
-      message: "Which departament does the role belongs to?.",
-      name: 'departmentFromList',
-      choices: departamentArray,
-    },
-  );
-
-  let departmentId = null;
-  departmentList.forEach(element => {
-    if (element.department_name === departmentFromList) {
-      departmentId = element.id;
-    }
-  });
-
-  await mainData(`INSERT INTO employee_role (title, salary, department) VALUES ("${roleName}", "${salary}", "${departmentId}");`, "insert")
+  let role = new Role();
+  await role.getRoleTitle();
+  await role.getRoleSalary();
+  await role.getDepartmentId();
+  await mainData(`INSERT INTO employee_role (title, salary, department) VALUES ("${role.title}", "${role.salary}", "${role.departmentId}");`, "insert")
   console.log("\x1b[33m", "Role added!", "\x1b[33m")
 }
 
 async function addEmployee() {
-  let { firstName } = await inquirer.prompt(questions[4]);
-  let { lastName } = await inquirer.prompt(questions[5]);
-
-  const roleList = await mainData('SELECT title, employee_role.id AS roleId FROM employee_role GROUP BY title', "get");
-  let roleListArray = [];
-  roleList.forEach(element => { roleListArray.push(element.title) });
-
-  const managersList = await mainData(`SELECT first_name, last_name, title, employee.id AS employeeId FROM employee JOIN employee_role ON employee.employee_role = employee_role.id WHERE title ='Manager'`, "get");
-  let managersListArray = [];
-  managersList.forEach(element => {
-    managersListArray.push((element.first_name + " " + element.last_name + " Employee ID:" + element.employeeId));
-  });
-
-  let { roleFromList } = await inquirer.prompt(
-    {
-      type: 'list',
-      message: "What is the employee's role?.",
-      name: 'roleFromList',
-      choices: roleListArray,
-    },
-  );
-
-  let roleId = null;
-  roleList.forEach(element => {
-    if (element.title === roleFromList) {
-      roleId = element.roleId;
-    }
-  });
-
-  let { assignManager } = await inquirer.prompt(
-    {
-      type: 'list',
-      message: "Who is the employee's manager?.",
-      name: 'assignManager',
-      choices: managersListArray,
-    },
-  );
-
-  let managerId = null;
-  managersList.forEach(element => {
-    if ((element.first_name + " " + element.last_name + " Employee ID:" + element.employeeId) === assignManager) {
-      managerId = element.employeeId;
-    }
-  });
-
-  await mainData(`INSERT INTO employee (first_name, last_name, employee_role, manager_id) VALUES ("${firstName}", "${lastName}", "${roleId}" , "${managerId}");`, "insert")
+  let employee = new Employee();
+  await employee.getEmployeeName();
+  await employee.getEmployeeLastName();
+  await employee.getRoleId();
+  await employee.getManagerId();
+  await mainData(`INSERT INTO employee (first_name, last_name, employee_role, manager_id) VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}" , "${employee.managerId}");`, "insert")
   console.log("\x1b[33m", "Employee added!", "\x1b[33m")
 }
 

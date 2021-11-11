@@ -9,32 +9,32 @@ module.exports = [{
     message: `What is the name of the departament?`,
     name: 'departamentName',
 },
-{
-    type: 'input',
-    message: `What is the name of role?`,
-    name: 'roleName',
-},
-{
-    type: 'input',
-    message: `What is the salary of the role?`,
-    name: 'salary',
-},
+// {
+//     type: 'input',
+//     message: `What is the name of role?`,
+//     name: 'roleName',
+// },
+// {
+//     type: 'input',
+//     message: `What is the salary of the role?`,
+//     name: 'salary',
+// },
 // {
 //     type: 'list',
 //     message: "Which departament does the role belongs to?.",
 //     name: 'departmentFromList',
 //     choices: ["----- ARRAY FROM department TABLE -----"],
 // },
-{
-    type: 'input',
-    message: `What is the employee's first name?`,
-    name: 'firstName',
-},
-{
-    type: 'input',
-    message: `What is the employee's last name?`,
-    name: 'lastName',
-},
+// {
+//     type: 'input',
+//     message: `What is the employee's first name?`,
+//     name: 'firstName',
+// },
+// {
+//     type: 'input',
+//     message: `What is the employee's last name?`,
+//     name: 'lastName',
+// },
 // {
 //     type: 'list',
 //     message: "What is the employee's role?.",
