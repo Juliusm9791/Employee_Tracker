@@ -19,12 +19,12 @@ module.exports = [{
     message: `What is the salary of the role?`,
     name: 'salary',
 },
-{
-    type: 'list',
-    message: "Which departament does the role belongs to?.",
-    name: 'departmentFromList',
-    choices: ["----- ARRAY FROM department TABLE -----"],
-},
+// {
+//     type: 'list',
+//     message: "Which departament does the role belongs to?.",
+//     name: 'departmentFromList',
+//     choices: ["----- ARRAY FROM department TABLE -----"],
+// },
 {
     type: 'input',
     message: `What is the employee's first name?`,
@@ -35,18 +35,18 @@ module.exports = [{
     message: `What is the employee's last name?`,
     name: 'lastName',
 },
-{
-    type: 'list',
-    message: "What is the employee's role?.",
-    name: 'roleFromList',
-    choices: ["----- ARRAY FROM employee_role TABLE -----"],
-},
-{
-    type: 'list',
-    message: "Who is the employee's manager?.",
-    name: 'assignManager',
-    choices: ["----- ARRAY FROM filtered manager's employee TABLE -----"],
-},
+// {
+//     type: 'list',
+//     message: "What is the employee's role?.",
+//     name: 'roleFromList',
+//     choices: ["----- ARRAY FROM employee_role TABLE -----"],
+// },
+// {
+//     type: 'list',
+//     message: "Who is the employee's manager?.",
+//     name: 'assignManager',
+//     choices: ["----- ARRAY FROM filtered manager's employee TABLE -----"],
+// },
 {
     type: 'list',
     message: `Which employee's role do you want to update?`,
