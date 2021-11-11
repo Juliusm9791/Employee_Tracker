@@ -1,4 +1,3 @@
-// const mysql = require('mysql2/promise');
 const inquirer = require("inquirer");
 const questions = require("./utils/questions");
 const cTable = require('console.table');
@@ -11,6 +10,15 @@ async function startApp() {
   while (answer !== "Quit") {
     let { whatToDo } = await inquirer.prompt(questions[0]);
     switch (whatToDo) {
+      case "View All Employee":
+        const employees = await mainData(`SELECT e.id AS id, e.first_name AS first_name, e.last_name AS last_mane, title, department_name AS department, salary, CONCAT(m.first_name, " ", m.last_name) AS manager
+                                        FROM employee e
+                                        JOIN employee_role ON e.employee_role = employee_role.id
+                                        JOIN department ON employee_role.department = department.id
+                                        LEFT JOIN employee m ON e.manager_id = m.id
+                                        ORDER BY first_name ASC`, "get");
+        console.table("\x1b[32m", employees, "\x1b[32m");
+        break;
       case "Add Employee":
         await addEmployee();
         break;
@@ -18,7 +26,10 @@ async function startApp() {
 
         break;
       case "View All Roles":
-        const roles = await mainData(`SELECT title FROM employee_role GROUP BY title`, "get");
+        const roles = await mainData(`SELECT employee_role.id AS id, title, department.department_name AS department, salary 
+                                      FROM employee_role 
+                                      JOIN department ON employee_role.department = department.id 
+                                      GROUP BY id`, "get");
         console.table("\x1b[32m", roles, "\x1b[32m");
         break;
 
@@ -27,7 +38,10 @@ async function startApp() {
         break;
 
       case "View All Departaments":
-        const department = await mainData(`SELECT department_name FROM department GROUP BY department_name`, "get");
+        const department = await mainData(`SELECT id, department_name 
+                                           FROM department 
+                                           GROUP BY department_name 
+                                           ORDER BY department_name ASC`, "get");
         console.table("\x1b[32m", department, "\x1b[32m");
         break;
 

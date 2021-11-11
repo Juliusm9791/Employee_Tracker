@@ -2,7 +2,7 @@ module.exports = [{
     type: 'list',
     message: "What would you like to do?.",
     name: 'whatToDo',
-    choices: ["Add Employee", "Update Employee Role", "View All Roles", "Add Role", "View All Departaments", "Add Departament", "Quit"],
+    choices: ["View All Employee", "Add Employee", "Update Employee Role", "View All Roles", "Add Role", "View All Departaments", "Add Departament", "Quit"],
 },
 {
     type: 'input',
