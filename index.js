@@ -19,7 +19,7 @@ async function startApp() {
                                         JOIN department ON employee_role.department = department.id
                                         LEFT JOIN employee m ON e.manager_id = m.id
                                         ORDER BY first_name ASC`, "get");
-        console.table("\x1b[32m", employees, "\x1b[32m");
+        console.table("\x1b[32m", employees);
         break;
       case "Add Employee":
         await addEmployee();
@@ -33,7 +33,7 @@ async function startApp() {
                                       JOIN department ON employee_role.department = department.id 
                                       GROUP BY id
                                       ORDER BY department_name ASC`, "get");
-        console.table("\x1b[32m", roles, "\x1b[32m");
+        console.table("\x1b[32m", roles);
         break;
 
       case "Add Role":
@@ -45,13 +45,13 @@ async function startApp() {
                                            FROM department 
                                            GROUP BY department_name 
                                            ORDER BY department_name ASC`, "get");
-        console.table("\x1b[32m", department, "\x1b[32m");
+        console.table("\x1b[32m", department);
         break;
 
       case "Add Departament":
         let { departamentName } = await inquirer.prompt(questions[1]);
         await mainData(`INSERT INTO department (department_name) VALUES ("${departamentName}");`, "insert");
-        console.log("\x1b[33m", "Department added!", "\x1b[33m")
+        console.log("\x1b[33m", "Department added!")
         break;
 
       case "Update Employee Manager":
@@ -64,7 +64,7 @@ async function startApp() {
 
       case "\x1b[33m--Quit--\x1b[37m":
         answer = "Quit";
-        console.log("\x1b[33m", "Good bye!", "\x1b[33m")
+        console.log("\x1b[33m", "Good bye!")
         process.exit();
     }
   }
@@ -79,7 +79,7 @@ async function addRole() {
   await role.getDepartmentId();
   await mainData(`INSERT INTO employee_role (title, salary, department) 
                   VALUES ("${role.title}", "${role.salary}", "${role.departmentId}");`, "insert")
-  console.log("\x1b[33m", "Role added!", "\x1b[33m")
+  console.log("\x1b[33m", "Role added!")
 }
 
 // ---------- Add Employee ----------
@@ -92,7 +92,7 @@ async function addEmployee() {
   await employee.getManagerId();
   await mainData(`INSERT INTO employee (first_name, last_name, employee_role) 
                   VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}");`, "insert")
-  console.log("\x1b[33m", "Employee added!", "\x1b[33m")
+  console.log("\x1b[33m", "Employee added!")
 }
 
 // ---------- Update role ----------
@@ -121,7 +121,7 @@ async function updateRole(cb) {
   await mainData(`UPDATE employee
                   SET employee_role =  "${roleId}"
                   WHERE id = "${employeeId}";`, "insert");
-  console.log("\x1b[33m", "Employee's role updated!", "\x1b[33m")
+  console.log("\x1b[33m", "Employee's role updated!")
 }
 
 // ---------- Update manager ----------
@@ -154,7 +154,7 @@ async function updateManager(cb) {
   await mainData(`UPDATE employee
                   SET manager_id = ${selectedManagerId}
                   WHERE id = "${selectedEmployeeId}";`, "insert");
-  console.log("\x1b[33m", "Employee's manager updated!", "\x1b[33m")
+  console.log("\x1b[33m", "Employee's manager updated!")
 }
 
 // --------- View employees by manager ---------
@@ -177,7 +177,7 @@ async function managersTeam(cb) {
                   FROM employee
                   JOIN employee_role ON employee.employee_role = employee_role.id
                   WHERE manager_id = "${selectedManagerId}";`, "get");
-  console.table("\x1b[32m", selectedManager + " Team:\n", team, "\x1b[32m");
+  console.table("\x1b[32m", selectedManager + " Team:\n", team);
 
 }
 
