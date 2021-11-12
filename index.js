@@ -31,7 +31,8 @@ async function startApp() {
         const roles = await mainData(`SELECT employee_role.id AS id, title, department.department_name AS department, salary 
                                       FROM employee_role 
                                       JOIN department ON employee_role.department = department.id 
-                                      GROUP BY id`, "get");
+                                      GROUP BY id
+                                      ORDER BY department_name ASC`, "get");
         console.table("\x1b[32m", roles, "\x1b[32m");
         break;
 
@@ -57,7 +58,11 @@ async function startApp() {
         await updateManager(listQuestions);
         break;
 
-      case "Quit":
+      case "View Employees By Manager":
+        await managersTeam(listQuestions);
+        break;
+
+      case "\x1b[33m--Quit--\x1b[37m":
         answer = "Quit";
         console.log("\x1b[33m", "Good bye!", "\x1b[33m")
         process.exit();
@@ -150,6 +155,30 @@ async function updateManager(cb) {
                   SET manager_id = ${selectedManagerId}
                   WHERE id = "${selectedEmployeeId}";`, "insert");
   console.log("\x1b[33m", "Employee's manager updated!", "\x1b[33m")
+}
+
+// --------- View employees by manager ---------
+
+async function managersTeam(cb) {
+  const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
+                                         FROM employee 
+                                         JOIN employee_role ON employee.employee_role = employee_role.id
+                                         WHERE title LIKE "%manager%"
+                                         ORDER BY first_name ASC`, "get");
+
+  let managerArray = [];
+  selectManager.forEach(element => { managerArray.push(element.first_name + " " + element.last_name) });
+
+  let { selectedManager } = await cb(`Which manager's team do you want to view?`, `selectedManager`, managerArray);
+
+  let { id: selectedManagerId } = selectManager.find(element => (element.first_name + " " + element.last_name) === selectedManager);
+
+  let team = await mainData(`SELECT manager_id AS id, first_name, last_name, title 
+                  FROM employee
+                  JOIN employee_role ON employee.employee_role = employee_role.id
+                  WHERE manager_id = "${selectedManagerId}";`, "get");
+  console.table("\x1b[32m", selectedManager + " Team:\n", team, "\x1b[32m");
+
 }
 
 // ---------- Function for list questions ----------
