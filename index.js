@@ -5,6 +5,8 @@ const mainData = require("./utils/datalink");
 const Employee = require("./utils/employee");
 const Role = require("./utils/role");
 
+// ---------- Main function to run APP ----------
+
 async function startApp() {
   let answer = "";
   while (answer !== "Quit") {
@@ -23,7 +25,7 @@ async function startApp() {
         await addEmployee();
         break;
       case "Update Employee Role":
-        await updateRole();
+        await updateRole(listQuestions);
         break;
       case "View All Roles":
         const roles = await mainData(`SELECT employee_role.id AS id, title, department.department_name AS department, salary 
@@ -52,7 +54,7 @@ async function startApp() {
         break;
 
       case "Update Employee Manager":
-        await updateManager();
+        await updateManager(listQuestions);
         break;
 
       case "Quit":
@@ -63,6 +65,8 @@ async function startApp() {
   }
 }
 
+// ---------- Add Role ----------
+
 async function addRole() {
   let role = new Role();
   await role.getRoleTitle();
@@ -72,6 +76,8 @@ async function addRole() {
                   VALUES ("${role.title}", "${role.salary}", "${role.departmentId}");`, "insert")
   console.log("\x1b[33m", "Role added!", "\x1b[33m")
 }
+
+// ---------- Add Employee ----------
 
 async function addEmployee() {
   let employee = new Employee();
@@ -84,7 +90,9 @@ async function addEmployee() {
   console.log("\x1b[33m", "Employee added!", "\x1b[33m")
 }
 
-async function updateRole() {
+// ---------- Update role ----------
+
+async function updateRole(cb) {
   const selectEmployee = await mainData(`SELECT id, first_name, last_name 
                                            FROM employee 
                                            ORDER BY first_name ASC`, "get");
@@ -99,19 +107,8 @@ async function updateRole() {
   let roleArray = [];
   selectRole.forEach(element => { roleArray.push(element.title) });
 
-  let { updatedRole } = await inquirer.prompt({
-    type: 'list',
-    message: `Which employee's role do you want to update?`,
-    name: 'updatedRole',
-    choices: employeeArray,
-  });
-
-  let { assignUpdatedRole } = await inquirer.prompt({
-    type: 'list',
-    message: `Which role do you want to assign for the selected employee?`,
-    name: 'assignUpdatedRole',
-    choices: roleArray,
-  });
+  let { updatedRole } = await cb(`Which employee's role do you want to update?`, `updatedRole`, employeeArray);
+  let { assignUpdatedRole } = await cb(`Which role do you want to assign for the selected employee?`, `assignUpdatedRole`, roleArray);
 
   let { id: roleId } = selectRole.find(element => element.title === assignUpdatedRole);
   let { id: employeeId } = selectEmployee.find(element => (element.first_name + " " + element.last_name) === updatedRole);
@@ -122,7 +119,9 @@ async function updateRole() {
   console.log("\x1b[33m", "Employee's role updated!", "\x1b[33m")
 }
 
-async function updateManager() {
+// ---------- Update manager ----------
+
+async function updateManager(cb) {
   const selectEmployee = await mainData(`SELECT id, first_name, last_name 
                                          FROM employee 
                                          ORDER BY first_name ASC`, "get");
@@ -130,7 +129,7 @@ async function updateManager() {
   const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
                                          FROM employee 
                                          JOIN employee_role ON employee.employee_role = employee_role.id
-                                         WHERE title LIKE  "%manager%"
+                                         WHERE title LIKE "%manager%"
                                          ORDER BY first_name ASC`, "get");
 
   let employeeArray = [];
@@ -139,30 +138,30 @@ async function updateManager() {
   let managerArray = ["None"];
   selectManager.forEach(element => { managerArray.push(element.first_name + " " + element.last_name) });
 
-  let { selectedEmployee } = await inquirer.prompt({
-    type: 'list',
-    message: `Which employee's manager do you want to update?`,
-    name: 'selectedEmployee',
-    choices: employeeArray,
-  });
+  let { selectedEmployee } = await cb(`Which employee's manager do you want to update?`, `selectedEmployee`, employeeArray);
+  let { selectedManager } = await cb(`Which manager do you want to assign for the selected employee?`, `selectedManager`, managerArray);
 
-  let { selectedManager } = await inquirer.prompt({
-    type: 'list',
-    message: `Which manager do you want to assign for the selected employee?`,
-    name: 'selectedManager',
-    choices: managerArray,
-  });
   let selectedManagerId;
   let { id: selectedEmployeeId } = selectEmployee.find(element => (element.first_name + " " + element.last_name) === selectedEmployee);
-  let ManagerId = selectManager.find(element => (element.first_name + " " + element.last_name) === selectedManager);
-  ManagerId ? selectedManagerId = `"${ManagerId.id}"` : selectedManagerId = "NULL";
+  let managerId = selectManager.find(element => (element.first_name + " " + element.last_name) === selectedManager);
+  managerId ? selectedManagerId = `"${managerId.id}"` : selectedManagerId = "NULL";
 
   await mainData(`UPDATE employee
                   SET manager_id = ${selectedManagerId}
                   WHERE id = "${selectedEmployeeId}";`, "insert");
   console.log("\x1b[33m", "Employee's manager updated!", "\x1b[33m")
-
 }
 
+// ---------- Function for list questions ----------
+
+async function listQuestions(question, choiceName, choicesArray) {
+  let answer = await inquirer.prompt({
+    type: 'list',
+    message: question,
+    name: choiceName,
+    choices: choicesArray,
+  });
+  return answer;
+}
 
 startApp();
