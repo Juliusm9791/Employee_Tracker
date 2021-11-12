@@ -11,6 +11,7 @@ async function startApp() {
   let answer = "";
   while (answer !== "Quit") {
     let { whatToDo } = await inquirer.prompt(questions[0]);
+
     switch (whatToDo) {
       case "View All Employee":
         const employees = await mainData(`SELECT e.id AS id, e.first_name AS first_name, e.last_name AS last_mane, title, department_name AS department, salary, CONCAT(m.first_name, " ", m.last_name) AS manager
@@ -21,12 +22,15 @@ async function startApp() {
                                           ORDER BY first_name ASC`, "get");
         console.table("\x1b[32m", employees);
         break;
+
       case "Add Employee":
         await addEmployee();
         break;
+
       case "Update Employee Role":
         await updateRole(listQuestions);
         break;
+
       case "View All Roles":
         const roles = await mainData(`SELECT employee_role.id AS id, title, department.department_name AS department, salary 
                                       FROM employee_role 
@@ -64,6 +68,16 @@ async function startApp() {
 
       case "View Employees By Department":
         await viewByDepartment(listQuestions);
+        break;
+
+      case "View departments budgets":
+        // JOIN employee_role ON employee_role = employee_role.id    -- add this line if yoy want sum only for assigned roles
+        const budgets = await mainData(`SELECT department.id AS id, department_name AS department, SUM(salary) AS department_budget
+                                          FROM employee_role
+                                          JOIN department ON employee_role.department = department.id
+                                          GROUP BY department
+                                          ORDER BY department_name ASC`, "get");
+        console.table("\x1b[32m", budgets);
         break;
 
       case "\x1b[33m--Quit--\x1b[37m":
@@ -210,6 +224,8 @@ async function viewByDepartment(cb) {
   console.log("\n\x1b[32m", selectedDepartment + " Employees:\n");
   console.table(byDepartment);
 }
+
+// ---------- View departments budgets ----------
 
 // ---------- Function for list questions ----------
 
