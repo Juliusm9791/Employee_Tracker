@@ -82,10 +82,16 @@ async function updateRole() {
   const selectEmployee = await mainData(`SELECT id, first_name, last_name 
                                            FROM employee 
                                            ORDER BY first_name ASC`, "get");
-  console.table(selectEmployee)
+
+  const selectRole = await mainData(`SELECT id, title
+                                     FROM employee_role 
+                                     ORDER BY title ASC`, "get");
 
   let employeeArray = [];
   selectEmployee.forEach(element => { employeeArray.push(element.first_name + " " + element.last_name) });
+
+  let roleArray = [];
+  selectRole.forEach(element => { roleArray.push(element.title) });
 
   let { updatedRole } = await inquirer.prompt({
     type: 'list',
@@ -94,16 +100,6 @@ async function updateRole() {
     choices: employeeArray,
   });
 
-  const selectRole = await mainData(`SELECT employee_role.id AS id, title
-                                     FROM employee 
-                                     JOIN employee_role ON employee.employee_role = employee_role.id
-                                     GROUP BY title
-                                     ORDER BY title ASC`, "get");
-
-  console.table(selectRole)
-  let roleArray = [];
-  selectRole.forEach(element => { roleArray.push(element.title) });
-
   let { assignUpdatedRole } = await inquirer.prompt({
     type: 'list',
     message: `Which role do you want to assign for the selested employee?`,
@@ -111,10 +107,13 @@ async function updateRole() {
     choices: roleArray,
   });
 
+  let { id: roleId } = selectRole.find(element => element.title === assignUpdatedRole);
+  let { id: employeeId } = selectEmployee.find(element => (element.first_name + " " + element.last_name) === updatedRole);
 
-  // await mainData(`INSERT INTO department (department_name) VALUES ("${departamentName}");`, "insert");
-  // console.log("\x1b[33m", "Department added!", "\x1b[33m")
-
+  await mainData(`UPDATE employee
+                  SET employee_role =  "${roleId}"
+                  WHERE id = "${employeeId}";`, "insert");
+  console.log("\x1b[33m", "Employee role updated!", "\x1b[33m")
 }
 
 startApp();
