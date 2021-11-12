@@ -14,11 +14,11 @@ async function startApp() {
     switch (whatToDo) {
       case "View All Employee":
         const employees = await mainData(`SELECT e.id AS id, e.first_name AS first_name, e.last_name AS last_mane, title, department_name AS department, salary, CONCAT(m.first_name, " ", m.last_name) AS manager
-                                        FROM employee e
-                                        JOIN employee_role ON e.employee_role = employee_role.id
-                                        JOIN department ON employee_role.department = department.id
-                                        LEFT JOIN employee m ON e.manager_id = m.id
-                                        ORDER BY first_name ASC`, "get");
+                                          FROM employee e
+                                          JOIN employee_role ON e.employee_role = employee_role.id
+                                          JOIN department ON employee_role.department = department.id
+                                          LEFT JOIN employee m ON e.manager_id = m.id
+                                          ORDER BY first_name ASC`, "get");
         console.table("\x1b[32m", employees);
         break;
       case "Add Employee":
@@ -62,6 +62,10 @@ async function startApp() {
         await managersTeam(listQuestions);
         break;
 
+      case "View Employees By Department":
+        await viewByDepartment(listQuestions);
+        break;
+
       case "\x1b[33m--Quit--\x1b[37m":
         answer = "Quit";
         console.log("\x1b[33m", "Good bye!")
@@ -99,8 +103,8 @@ async function addEmployee() {
 
 async function updateRole(cb) {
   const selectEmployee = await mainData(`SELECT id, first_name, last_name 
-                                           FROM employee 
-                                           ORDER BY first_name ASC`, "get");
+                                         FROM employee 
+                                         ORDER BY first_name ASC`, "get");
 
   const selectRole = await mainData(`SELECT id, title
                                      FROM employee_role 
@@ -132,10 +136,10 @@ async function updateManager(cb) {
                                          ORDER BY first_name ASC`, "get");
 
   const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
-                                         FROM employee 
-                                         JOIN employee_role ON employee.employee_role = employee_role.id
-                                         WHERE title LIKE "%manager%"
-                                         ORDER BY first_name ASC`, "get");
+                                        FROM employee 
+                                        JOIN employee_role ON employee.employee_role = employee_role.id
+                                        WHERE title LIKE "%manager%"
+                                        ORDER BY first_name ASC`, "get");
 
   let employeeArray = [];
   selectEmployee.forEach(element => { employeeArray.push(element.first_name + " " + element.last_name) });
@@ -161,10 +165,10 @@ async function updateManager(cb) {
 
 async function managersTeam(cb) {
   const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
-                                         FROM employee 
-                                         JOIN employee_role ON employee.employee_role = employee_role.id
-                                         WHERE title LIKE "%manager%"
-                                         ORDER BY first_name ASC`, "get");
+                                        FROM employee 
+                                        JOIN employee_role ON employee.employee_role = employee_role.id
+                                        WHERE title LIKE "%manager%"
+                                        ORDER BY first_name ASC`, "get");
 
   let managerArray = [];
   selectManager.forEach(element => { managerArray.push(element.first_name + " " + element.last_name) });
@@ -174,11 +178,37 @@ async function managersTeam(cb) {
   let { id: selectedManagerId } = selectManager.find(element => (element.first_name + " " + element.last_name) === selectedManager);
 
   let team = await mainData(`SELECT manager_id AS id, first_name, last_name, title 
-                  FROM employee
-                  JOIN employee_role ON employee.employee_role = employee_role.id
-                  WHERE manager_id = "${selectedManagerId}";`, "get");
-  console.table("\x1b[32m", selectedManager + " Team:\n", team);
+                             FROM employee
+                             JOIN employee_role ON employee.employee_role = employee_role.id
+                             WHERE manager_id = "${selectedManagerId}";`, "get");
+  console.log("\n\x1b[32m", selectedManager + " Team:\n");
+  console.table(team)
+}
 
+// ---------- View employees by department ----------
+
+async function viewByDepartment(cb) {
+  const departments = await mainData(`SELECT id, department_name 
+                                      FROM department 
+                                      GROUP BY department_name 
+                                      ORDER BY department_name ASC`, "get");
+
+  let departmentsArray = [];
+  departments.forEach(element => { departmentsArray.push(element.department_name) });
+
+  let { selectedDepartment } = await cb(`Which department team do you want to view?`, `selectedDepartment`, departmentsArray);
+
+  let { id: selectedDepartmentId } = departments.find(element => (element.department_name) === selectedDepartment);
+
+  let byDepartment = await mainData(`SELECT e.id AS id, e.first_name AS first_name, e.last_name AS last_mane, title, salary
+                                     FROM employee e
+                                     JOIN employee_role ON e.employee_role = employee_role.id
+                                     JOIN department ON employee_role.department = department.id
+                                     LEFT JOIN employee m ON e.manager_id = m.id
+                                     WHERE department = "${selectedDepartmentId}"
+                                     ORDER BY first_name ASC;`, "get");
+  console.log("\n\x1b[32m", selectedDepartment + " Employees:\n");
+  console.table(byDepartment);
 }
 
 // ---------- Function for list questions ----------
