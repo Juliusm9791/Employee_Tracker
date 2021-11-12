@@ -59,28 +59,32 @@ async function startApp() {
         break;
 
       case "Update Employee Manager":
-        await updateManager(listQuestions);
+        await updateManager();
         break;
 
       case "View Employees By Manager":
-        await managersTeam(listQuestions);
+        await managersTeam();
         break;
 
       case "View Employees By Department":
-        await viewByDepartment(listQuestions);
+        await viewByDepartment();
         break;
 
       case "View departments budgets":
-        // JOIN employee_role ON employee_role = employee_role.id    -- add this line if yoy want sum only for assigned roles
         const budgets = await mainData(`SELECT department.id AS id, department_name AS department, SUM(salary) AS department_budget
-                                          FROM employee_role
+                                          FROM employee
+                                          JOIN employee_role ON employee_role = employee_role.id
                                           JOIN department ON employee_role.department = department.id
                                           GROUP BY department
                                           ORDER BY department_name ASC`, "get");
         console.table("\x1b[32m", budgets);
         break;
 
-      case "\x1b[33m--Quit--\x1b[37m":
+      case "\x1b[41mDelete From Database\x1b[40m":
+        await deleteData();
+        break;
+
+      case "\x1b[7m--Quit--\x1b[0m":
         answer = "Quit";
         console.log("\x1b[33m", "Good bye!")
         process.exit();
@@ -144,64 +148,82 @@ async function updateRole(cb) {
 
 // ---------- Update manager ----------
 
-async function updateManager(cb) {
-  const selectEmployee = await mainData(`SELECT id, first_name, last_name 
-                                         FROM employee 
-                                         ORDER BY first_name ASC`, "get");
-
-  const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
-                                        FROM employee 
-                                        JOIN employee_role ON employee.employee_role = employee_role.id
-                                        WHERE title LIKE "%manager%"
-                                        ORDER BY first_name ASC`, "get");
-
-  let employeeArray = [];
-  selectEmployee.forEach(element => { employeeArray.push(element.first_name + " " + element.last_name) });
-
-  let managerArray = ["None"];
-  selectManager.forEach(element => { managerArray.push(element.first_name + " " + element.last_name) });
-
-  let { selectedEmployee } = await cb(`Which employee's manager do you want to update?`, `selectedEmployee`, employeeArray);
-  let { selectedManager } = await cb(`Which manager do you want to assign for the selected employee?`, `selectedManager`, managerArray);
-
-  let selectedManagerId;
-  let { id: selectedEmployeeId } = selectEmployee.find(element => (element.first_name + " " + element.last_name) === selectedEmployee);
-  let managerId = selectManager.find(element => (element.first_name + " " + element.last_name) === selectedManager);
-  managerId ? selectedManagerId = `"${managerId.id}"` : selectedManagerId = "NULL";
+async function updateManager() {
+  let selectedEmp = await selectEmployee(`Which employee's manager do you want to update?`);
+  let selectedMan = await selectManager(`Which manager do you want to assign for selected employee?`, "None");
 
   await mainData(`UPDATE employee
-                  SET manager_id = ${selectedManagerId}
-                  WHERE id = "${selectedEmployeeId}";`, "insert");
+                  SET manager_id = ${selectedMan.id}
+                  WHERE id = ${selectedEmp.id};`, "insert");
   console.log("\x1b[33m", "Employee's manager updated!")
 }
 
 // --------- View employees by manager ---------
 
-async function managersTeam(cb) {
-  const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
-                                        FROM employee 
-                                        JOIN employee_role ON employee.employee_role = employee_role.id
-                                        WHERE title LIKE "%manager%"
-                                        ORDER BY first_name ASC`, "get");
-
-  let managerArray = [];
-  selectManager.forEach(element => { managerArray.push(element.first_name + " " + element.last_name) });
-
-  let { selectedManager } = await cb(`Which manager's team do you want to view?`, `selectedManager`, managerArray);
-
-  let { id: selectedManagerId } = selectManager.find(element => (element.first_name + " " + element.last_name) === selectedManager);
+async function managersTeam() {
+  let selectedMan = await selectManager(`Which manager's team do you want to view?`)
 
   let team = await mainData(`SELECT manager_id AS id, first_name, last_name, title 
                              FROM employee
                              JOIN employee_role ON employee.employee_role = employee_role.id
-                             WHERE manager_id = "${selectedManagerId}";`, "get");
-  console.log("\n\x1b[32m", selectedManager + " Team:\n");
+                             WHERE manager_id = "${selectedMan.id}";`, "get");
+  console.log("\n\x1b[32m", selectedMan.first_name + " " + selectedMan.last_name + " Team:\n");
   console.table(team)
 }
 
 // ---------- View employees by department ----------
 
-async function viewByDepartment(cb) {
+async function viewByDepartment() {
+  let selectedDep = await selectDepartment(`Which department team do you want to view?`);
+
+  let byDepartment = await mainData(`SELECT e.id AS id, e.first_name AS first_name, e.last_name AS last_mane, title, salary
+                                     FROM employee e
+                                     JOIN employee_role ON e.employee_role = employee_role.id
+                                     JOIN department ON employee_role.department = department.id
+                                     LEFT JOIN employee m ON e.manager_id = m.id
+                                     WHERE department = "${selectedDep.id}"
+                                     ORDER BY first_name ASC;`, "get");
+  console.log("\n\x1b[32m", selectedDep.department_name + " Employees:\n");
+  console.table(byDepartment);
+}
+
+// ---------- Delete From Database ----------
+
+async function deleteData(cb) {
+  let { whatToDelete } = await cb(`What do you want to delete?`, `whatToDelete`, ["Department", "Role", "Employee"]);
+  switch (whatToDelete) {
+    case "Department":
+      await deleteDepatment();
+      break;
+    case "Role":
+      await deleteRole();
+      break;
+    case "Employee":
+      await deleteEmployee();
+      break;
+  }
+}
+
+async function selectManager(question, optionalToArray) {
+  const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
+                                        FROM employee 
+                                        JOIN employee_role ON employee.employee_role = employee_role.id
+                                        WHERE title LIKE "%manager%"
+                                        ORDER BY first_name ASC`, "get");
+  let managerArray;
+  optionalToArray ? managerArray = [optionalToArray] : managerArray = [];
+
+  selectManager.forEach(element => { managerArray.push(element.first_name + " " + element.last_name) });
+
+  let { selectedManager } = await listQuestions(question, `selectedManager`, managerArray);
+
+  let selectedManReturn;
+  let selectedMan = selectManager.find(element => (element.first_name + " " + element.last_name) === selectedManager);
+  selectedMan ? selectedManReturn = selectedMan : selectedManReturn = { id: null }
+  return selectedManReturn;
+}
+
+async function selectDepartment(question) {
   const departments = await mainData(`SELECT id, department_name 
                                       FROM department 
                                       GROUP BY department_name 
@@ -210,22 +232,29 @@ async function viewByDepartment(cb) {
   let departmentsArray = [];
   departments.forEach(element => { departmentsArray.push(element.department_name) });
 
-  let { selectedDepartment } = await cb(`Which department team do you want to view?`, `selectedDepartment`, departmentsArray);
+  let { selectedDepartment } = await listQuestions(question, `selectedDepartment`, departmentsArray);
+  let selectedDep = departments.find(element => (element.department_name) === selectedDepartment);
 
-  let { id: selectedDepartmentId } = departments.find(element => (element.department_name) === selectedDepartment);
+  return selectedDep;
+}
+async function selectRole() {
 
-  let byDepartment = await mainData(`SELECT e.id AS id, e.first_name AS first_name, e.last_name AS last_mane, title, salary
-                                     FROM employee e
-                                     JOIN employee_role ON e.employee_role = employee_role.id
-                                     JOIN department ON employee_role.department = department.id
-                                     LEFT JOIN employee m ON e.manager_id = m.id
-                                     WHERE department = "${selectedDepartmentId}"
-                                     ORDER BY first_name ASC;`, "get");
-  console.log("\n\x1b[32m", selectedDepartment + " Employees:\n");
-  console.table(byDepartment);
+  return selectedRole;
 }
 
-// ---------- View departments budgets ----------
+async function selectEmployee(question) {
+  const selectEmployee = await mainData(`SELECT id, first_name, last_name 
+                                         FROM employee 
+                                         ORDER BY first_name ASC`, "get");
+
+  let employeeArray = [];
+  selectEmployee.forEach(element => { employeeArray.push(element.first_name + " " + element.last_name) });
+
+  let { selectedEmployee } = await listQuestions(question, `selectedEmployee`, employeeArray);
+  let idAndEmployee = selectEmployee.find(element => (element.first_name + " " + element.last_name) === selectedEmployee);
+
+  return idAndEmployee;
+}
 
 // ---------- Function for list questions ----------
 

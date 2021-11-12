@@ -1,6 +1,6 @@
 const mysql = require('mysql2/promise');
 
-async function mainData(table, key) {
+async function mainData(table, key, optionalValue) {
     const db = await mysql.createConnection(
       {
         host: 'localhost',
@@ -15,7 +15,7 @@ async function mainData(table, key) {
         return rows;
   
       case "insert":
-        await db.query(table);
+        await db.query(table, optionalValue);
         break;
     }
   }
