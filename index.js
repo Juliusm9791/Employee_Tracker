@@ -51,6 +51,10 @@ async function startApp() {
         console.log("\x1b[33m", "Department added!", "\x1b[33m")
         break;
 
+      case "Update Employee Manager":
+        await updateManager();
+        break;
+
       case "Quit":
         answer = "Quit";
         console.log("\x1b[33m", "Good bye!", "\x1b[33m")
@@ -64,7 +68,8 @@ async function addRole() {
   await role.getRoleTitle();
   await role.getRoleSalary();
   await role.getDepartmentId();
-  await mainData(`INSERT INTO employee_role (title, salary, department) VALUES ("${role.title}", "${role.salary}", "${role.departmentId}");`, "insert")
+  await mainData(`INSERT INTO employee_role (title, salary, department) 
+                  VALUES ("${role.title}", "${role.salary}", "${role.departmentId}");`, "insert")
   console.log("\x1b[33m", "Role added!", "\x1b[33m")
 }
 
@@ -74,7 +79,8 @@ async function addEmployee() {
   await employee.getEmployeeLastName();
   await employee.getRoleId();
   await employee.getManagerId();
-  await mainData(`INSERT INTO employee (first_name, last_name, employee_role) VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}");`, "insert")
+  await mainData(`INSERT INTO employee (first_name, last_name, employee_role) 
+                  VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}");`, "insert")
   console.log("\x1b[33m", "Employee added!", "\x1b[33m")
 }
 
@@ -102,7 +108,7 @@ async function updateRole() {
 
   let { assignUpdatedRole } = await inquirer.prompt({
     type: 'list',
-    message: `Which role do you want to assign for the selested employee?`,
+    message: `Which role do you want to assign for the selected employee?`,
     name: 'assignUpdatedRole',
     choices: roleArray,
   });
@@ -113,7 +119,50 @@ async function updateRole() {
   await mainData(`UPDATE employee
                   SET employee_role =  "${roleId}"
                   WHERE id = "${employeeId}";`, "insert");
-  console.log("\x1b[33m", "Employee role updated!", "\x1b[33m")
+  console.log("\x1b[33m", "Employee's role updated!", "\x1b[33m")
 }
+
+async function updateManager() {
+  const selectEmployee = await mainData(`SELECT id, first_name, last_name 
+                                         FROM employee 
+                                         ORDER BY first_name ASC`, "get");
+
+  const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
+                                         FROM employee 
+                                         JOIN employee_role ON employee.employee_role = employee_role.id
+                                         WHERE title LIKE  "%manager%"
+                                         ORDER BY first_name ASC`, "get");
+
+  let employeeArray = [];
+  selectEmployee.forEach(element => { employeeArray.push(element.first_name + " " + element.last_name) });
+
+  let managerArray = ["None"];
+  selectManager.forEach(element => { managerArray.push(element.first_name + " " + element.last_name) });
+
+  let { selectedEmployee } = await inquirer.prompt({
+    type: 'list',
+    message: `Which employee's manager do you want to update?`,
+    name: 'selectedEmployee',
+    choices: employeeArray,
+  });
+
+  let { selectedManager } = await inquirer.prompt({
+    type: 'list',
+    message: `Which manager do you want to assign for the selected employee?`,
+    name: 'selectedManager',
+    choices: managerArray,
+  });
+  let selectedManagerId;
+  let { id: selectedEmployeeId } = selectEmployee.find(element => (element.first_name + " " + element.last_name) === selectedEmployee);
+  let ManagerId = selectManager.find(element => (element.first_name + " " + element.last_name) === selectedManager);
+  ManagerId ? selectedManagerId = `"${ManagerId.id}"` : selectedManagerId = "NULL";
+
+  await mainData(`UPDATE employee
+                  SET manager_id = ${selectedManagerId}
+                  WHERE id = "${selectedEmployeeId}";`, "insert");
+  console.log("\x1b[33m", "Employee's manager updated!", "\x1b[33m")
+
+}
+
 
 startApp();

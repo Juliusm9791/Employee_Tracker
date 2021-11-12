@@ -75,7 +75,7 @@ class Employee {
             if ((element.first_name + " " + element.last_name) === assignManager) {
                 this.managerId = element.employeeId;
             } else {
-                this.managerId = "DBnull";
+                this.managerId = "";
             }
         });
     }
