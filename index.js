@@ -77,6 +77,12 @@ async function startApp() {
                                           JOIN department ON employee_role.department = department.id
                                           GROUP BY department
                                           ORDER BY department_name ASC`, "get");
+                                          
+                                          // select * from sales
+                                          // UNION ALL
+                                          // select 'Total' order_date,sum(sale) from sales;
+
+
         console.table("\x1b[32m", budgets);
         break;
 
