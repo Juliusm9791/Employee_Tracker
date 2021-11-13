@@ -71,12 +71,15 @@ async function startApp() {
         break;
 
       case "View departments budgets":
-        const budgets = await mainData(`SELECT department.id AS id, department_name AS department, SUM(salary) AS department_budget
-                                          FROM employee
-                                          JOIN employee_role ON employee_role = employee_role.id
-                                          JOIN department ON employee_role.department = department.id
-                                          GROUP BY department
-                                          ORDER BY department_name ASC`, "get");
+        const budgets = await mainData(`SELECT department.id AS id, department_name, SUM(salary) AS department_budget
+                                        FROM employee
+                                        JOIN employee_role ON employee_role = employee_role.id
+                                        JOIN department ON employee_role.department = department.id
+                                        GROUP BY department_name
+                                        UNION ALL SELECT '' id, '----------Total' title, SUM(salary)
+                                        FROM employee
+                                        JOIN employee_role ON employee_role = employee_role.id
+                                        JOIN department ON employee_role.department = department.id`, "get");
                                           
         console.table("\x1b[32m", budgets);
         break;
