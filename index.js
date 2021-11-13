@@ -78,11 +78,6 @@ async function startApp() {
                                           GROUP BY department
                                           ORDER BY department_name ASC`, "get");
                                           
-                                          // select * from sales
-                                          // UNION ALL
-                                          // select 'Total' order_date,sum(sale) from sales;
-
-
         console.table("\x1b[32m", budgets);
         break;
 
@@ -185,7 +180,6 @@ async function deleteData() {
       let delDepartment = await selectDepartment("Which department you want to dellete?");
       await mainData(`DELETE FROM department WHERE id = ${delDepartment.id}`, "insert");
       console.log("\x1b[33m", `${delDepartment.department_name} department deleted!`);
-
       break;
 
     case "Role":
