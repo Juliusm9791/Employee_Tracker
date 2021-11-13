@@ -16,8 +16,8 @@ async function startApp() {
       case "View All Employee":
         const employees = await mainData(`SELECT e.id AS id, e.first_name AS first_name, e.last_name AS last_mane, title, department_name AS department, salary, CONCAT(m.first_name, " ", m.last_name) AS manager
                                           FROM employee e
-                                          JOIN employee_role ON e.employee_role = employee_role.id
-                                          JOIN department ON employee_role.department = department.id
+                                          LEFT JOIN employee_role ON e.employee_role = employee_role.id
+                                          LEFT JOIN department ON employee_role.department = department.id
                                           LEFT JOIN employee m ON e.manager_id = m.id
                                           ORDER BY first_name ASC`, "get");
         console.table("\x1b[32m", employees);
@@ -28,7 +28,7 @@ async function startApp() {
         break;
 
       case "Update Employee Role":
-        await updateRole(listQuestions);
+        await updateRole();
         break;
 
       case "View All Roles":
@@ -119,30 +119,13 @@ async function addEmployee() {
 
 // ---------- Update role ----------
 
-async function updateRole(cb) {
-  const selectEmployee = await mainData(`SELECT id, first_name, last_name 
-                                         FROM employee 
-                                         ORDER BY first_name ASC`, "get");
-
-  const selectRole = await mainData(`SELECT id, title
-                                     FROM employee_role 
-                                     ORDER BY title ASC`, "get");
-
-  let employeeArray = [];
-  selectEmployee.forEach(element => { employeeArray.push(element.first_name + " " + element.last_name) });
-
-  let roleArray = [];
-  selectRole.forEach(element => { roleArray.push(element.title) });
-
-  let { updatedRole } = await cb(`Which employee's role do you want to update?`, `updatedRole`, employeeArray);
-  let { assignUpdatedRole } = await cb(`Which role do you want to assign for the selected employee?`, `assignUpdatedRole`, roleArray);
-
-  let { id: roleId } = selectRole.find(element => element.title === assignUpdatedRole);
-  let { id: employeeId } = selectEmployee.find(element => (element.first_name + " " + element.last_name) === updatedRole);
+async function updateRole() {
+  let selectedEmp = await selectEmployee(`Which employee's role do you want to update?`);
+  let selectRol = await selectRole(`Which role do you want to assign for the selected employee?`);
 
   await mainData(`UPDATE employee
-                  SET employee_role =  "${roleId}"
-                  WHERE id = "${employeeId}";`, "insert");
+                  SET employee_role =  "${selectRol.id}"
+                  WHERE id = "${selectedEmp.id}";`, "insert");
   console.log("\x1b[33m", "Employee's role updated!")
 }
 
@@ -189,20 +172,31 @@ async function viewByDepartment() {
 
 // ---------- Delete From Database ----------
 
-async function deleteData(cb) {
-  let { whatToDelete } = await cb(`What do you want to delete?`, `whatToDelete`, ["Department", "Role", "Employee"]);
+async function deleteData() {
+  let { whatToDelete } = await listQuestions(`What do you want to delete?`, `whatToDelete`, ["Department", "Role", "Employee"]);
   switch (whatToDelete) {
     case "Department":
-      await deleteDepatment();
+      let delDepartment = await selectDepartment("Which department you want to dellete?");
+      await mainData(`DELETE FROM department WHERE id = ${delDepartment.id}`, "insert");
+      console.log("\x1b[33m", `${delDepartment.department_name} department deleted!`);
+
       break;
+
     case "Role":
-      await deleteRole();
+      let delRole = await selectRole("Which role you want to dellete?");
+      await mainData(`DELETE FROM employee_role WHERE id = ${delRole.id}`, "insert");
+      console.log("\x1b[33m", `${delRole.title} role deleted!`);
       break;
+
     case "Employee":
-      await deleteEmployee();
+      let delEmployee = await selectEmployee("Which employee you want to dellete?");
+      await mainData(`DELETE FROM employee WHERE id = ${delEmployee.id}`, "insert");
+      console.log("\x1b[33m", `Employee ${delEmployee.first_name} ${delEmployee.last_name} deleted!`);
       break;
   }
 }
+
+// ---------- Select manager ----------
 
 async function selectManager(question, optionalToArray) {
   const selectManager = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
@@ -210,9 +204,9 @@ async function selectManager(question, optionalToArray) {
                                         JOIN employee_role ON employee.employee_role = employee_role.id
                                         WHERE title LIKE "%manager%"
                                         ORDER BY first_name ASC`, "get");
+
   let managerArray;
   optionalToArray ? managerArray = [optionalToArray] : managerArray = [];
-
   selectManager.forEach(element => { managerArray.push(element.first_name + " " + element.last_name) });
 
   let { selectedManager } = await listQuestions(question, `selectedManager`, managerArray);
@@ -222,6 +216,8 @@ async function selectManager(question, optionalToArray) {
   selectedMan ? selectedManReturn = selectedMan : selectedManReturn = { id: null }
   return selectedManReturn;
 }
+
+// ---------- Select departmaent ----------
 
 async function selectDepartment(question) {
   const departments = await mainData(`SELECT id, department_name 
@@ -234,13 +230,25 @@ async function selectDepartment(question) {
 
   let { selectedDepartment } = await listQuestions(question, `selectedDepartment`, departmentsArray);
   let selectedDep = departments.find(element => (element.department_name) === selectedDepartment);
-
   return selectedDep;
 }
-async function selectRole() {
 
-  return selectedRole;
+// ---------- Select role ----------
+
+async function selectRole(question) {
+  const selectRole = await mainData(`SELECT id, title
+                                     FROM employee_role 
+                                     ORDER BY title ASC`, "get");
+
+  let roleArray = [];
+  selectRole.forEach(element => { roleArray.push(element.title) });
+
+  let { assignUpdatedRole } = await listQuestions(question, `assignUpdatedRole`, roleArray);
+  let selectRol = selectRole.find(element => element.title === assignUpdatedRole);
+  return selectRol;
 }
+
+// ---------- Select employee ----------
 
 async function selectEmployee(question) {
   const selectEmployee = await mainData(`SELECT id, first_name, last_name 
@@ -252,7 +260,6 @@ async function selectEmployee(question) {
 
   let { selectedEmployee } = await listQuestions(question, `selectedEmployee`, employeeArray);
   let idAndEmployee = selectEmployee.find(element => (element.first_name + " " + element.last_name) === selectedEmployee);
-
   return idAndEmployee;
 }
 
