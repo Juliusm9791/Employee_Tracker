@@ -1,6 +1,6 @@
 const inquirer = require("inquirer");
-const questions = require("./utils/questions");
 const cTable = require('console.table');
+const questions = require("./utils/questions");
 const mainData = require("./utils/datalink");
 const Employee = require("./utils/employee");
 const Role = require("./utils/role");
@@ -76,7 +76,7 @@ async function startApp() {
                                         JOIN employee_role ON employee_role = employee_role.id
                                         JOIN department ON employee_role.department = department.id
                                         GROUP BY department_name
-                                        UNION ALL SELECT '' id, '----------Total' title, SUM(salary)
+                                        UNION ALL SELECT '--' id, '----------Total' department_name, SUM(salary)
                                         FROM employee
                                         JOIN employee_role ON employee_role = employee_role.id
                                         JOIN department ON employee_role.department = department.id`, "get");
@@ -84,7 +84,7 @@ async function startApp() {
         console.table("\x1b[32m", budgets);
         break;
 
-      case "\x1b[41mDelete From Database\x1b[40m":
+      case "\x1b[7m\x1b[31mDelete From Database\x1b[0m":
         await deleteData();
         break;
 
@@ -102,7 +102,8 @@ async function addRole() {
   let role = new Role();
   await role.getRoleTitle();
   await role.getRoleSalary();
-  await role.getDepartmentId();
+  let selectedDep = await selectDepartment(`Which departament does the role belongs to?`);
+  await role.getDepartmentId(selectedDep);
   await mainData(`INSERT INTO employee_role (title, salary, department) 
                   VALUES ("${role.title}", "${role.salary}", "${role.departmentId}");`, "insert")
   console.log("\x1b[33m", "Role added!")
@@ -114,10 +115,12 @@ async function addEmployee() {
   let employee = new Employee();
   await employee.getEmployeeName();
   await employee.getEmployeeLastName();
-  await employee.getRoleId();
-  await employee.getManagerId();
-  await mainData(`INSERT INTO employee (first_name, last_name, employee_role) 
-                  VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}");`, "insert")
+  let selectRol = await selectRole(`What is the employee's role?`);
+  await employee.getRoleId(selectRol);
+  let selectedMan = await selectManager(`Who is the employee's manager?`, "None");
+  await employee.getManagerId(selectedMan);
+  await mainData(`INSERT INTO employee (first_name, last_name, employee_role, manager_id) 
+                  VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}", "${employee.managerId}");`, "insert")
   console.log("\x1b[33m", "Employee added!")
 }
 
@@ -150,7 +153,7 @@ async function updateManager() {
 async function managersTeam() {
   let selectedMan = await selectManager(`Which manager's team do you want to view?`)
 
-  let team = await mainData(`SELECT manager_id AS id, first_name, last_name, title 
+  let team = await mainData(`SELECT employee.id AS id, first_name, last_name, title 
                              FROM employee
                              JOIN employee_role ON employee.employee_role = employee_role.id
                              WHERE manager_id = "${selectedMan.id}";`, "get");

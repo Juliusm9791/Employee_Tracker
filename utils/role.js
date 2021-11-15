@@ -1,5 +1,5 @@
 const inquirer = require("inquirer");
-const mainData = require("./datalink");
+// const mainData = require("./datalink");
 
 class Role {
     constructor(id, title, salary, departmentId) {
@@ -33,25 +33,8 @@ class Role {
         }
     }
 
-    async getDepartmentId() {
-        const departmentList = await mainData('SELECT * FROM department GROUP BY department_name', "get");
-        let departamentArray = [];
-        departmentList.forEach(element => { departamentArray.push(element.department_name) });
-
-        let { departmentFromList } = await inquirer.prompt(
-            {
-                type: 'list',
-                message: "Which departament does the role belongs to?.",
-                name: 'departmentFromList',
-                choices: departamentArray,
-            },
-        );
-
-        departmentList.forEach(element => {
-            if (element.department_name === departmentFromList) {
-                this.departmentId = element.id;
-            }
-        });
+    async getDepartmentId(getDepartmentId) {
+        this.departmentId = getDepartmentId.id
     }
 }
 

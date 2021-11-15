@@ -22,6 +22,11 @@
 
   [Employee Tracker video demonstration]()
 
+  #### For this project the following technologies were used:
+  * Nodejs
+  * npm inquirer
+  * npm mysql2
+
 
   ## Installation instructions
 
@@ -30,6 +35,15 @@
   ```npm i```
 
   ## Usage information
+
+  To load the database use the following commands:
+
+  ``mysql -u root -p``
+
+  ``source schema.sql``
+
+  ``source seeds.sql``
+
 
   To use this app - run the following command:
 
