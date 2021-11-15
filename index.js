@@ -84,7 +84,7 @@ async function startApp() {
         console.table("\x1b[32m", budgets);
         break;
 
-      case "\x1b[7m\x1b[31mDelete From Database\x1b[0m":
+      case "\x1b[31mDelete From Database\x1b[0m":
         await deleteData();
         break;
 
@@ -120,7 +120,7 @@ async function addEmployee() {
   let selectedMan = await selectManager(`Who is the employee's manager?`, "None");
   await employee.getManagerId(selectedMan);
   await mainData(`INSERT INTO employee (first_name, last_name, employee_role, manager_id) 
-                  VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}", "${employee.managerId}");`, "insert")
+                  VALUES ("${employee.firstName}", "${employee.lastName}", "${employee.roleId}", ${employee.managerId});`, "insert")
   console.log("\x1b[33m", "Employee added!")
 }
 
